@@ -35,7 +35,7 @@ import javax.crypto.spec.SecretKeySpec;
 
 public class CryptoCipher {
 
-  public static byte[] decryptRSA(byte[] source, PrivateKey privateKey)
+  public static byte[] decryptPrivateRSA(byte[] source, PrivateKey privateKey)
     throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
     Cipher cipher = Cipher.getInstance("RSA/ECB/OAEPPadding");
     OAEPParameterSpec oaepParams = new OAEPParameterSpec(
@@ -45,6 +45,15 @@ public class CryptoCipher {
       PSource.PSpecified.DEFAULT
     );
     cipher.init(Cipher.DECRYPT_MODE, privateKey, oaepParams);
+    byte[] decryptedBytes = cipher.doFinal(source);
+    return decryptedBytes;
+  }
+
+  public static byte[] decryptPublicRSA(byte[] source, PublicKey publicKey)
+    throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException 
+  {
+    Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+    cipher.init(Cipher.DECRYPT_MODE, publicKey);
     byte[] decryptedBytes = cipher.doFinal(source);
     return decryptedBytes;
   }
@@ -85,7 +94,18 @@ public class CryptoCipher {
     }
   }
 
-  private static byte[] join(byte[] byteArray1, byte[] byteArray2) {
+  private static PublicKey readX509PublicKey(byte[] x509Bytes)
+    throws GeneralSecurityException {
+    KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+    X509EncodedKeySpec keySpec = new X509EncodedKeySpec(x509Bytes);
+    try {
+      return keyFactory.generatePublic(keySpec);
+    } catch (InvalidKeySpecException e) {
+      throw new IllegalArgumentException("Unexpected key format!", e);
+    }
+  }
+
+  private static byte[] joinPrivate(byte[] byteArray1, byte[] byteArray2) {
     byte[] bytes = new byte[byteArray1.length + byteArray2.length];
     System.arraycopy(byteArray1, 0, bytes, 0, byteArray1.length);
     System.arraycopy(
@@ -131,7 +151,7 @@ public class CryptoCipher {
       (byte) ((pkcs1Length >> 8) & 0xff),
       (byte) (pkcs1Length & 0xff), // Octet string + length
     };
-    byte[] pkcs8bytes = join(pkcs8Header, pkcs1Bytes);
+    byte[] pkcs8bytes = joinPrivate(pkcs8Header, pkcs1Bytes);
     return readPkcs8PrivateKey(pkcs8bytes);
   }
 
@@ -153,25 +173,6 @@ public class CryptoCipher {
     return readPkcs1PrivateKey(pkcs1EncodedBytes);
   }
 
-  public static byte[] decryptPublicRSA(byte[] source, PublicKey publicKey)
-    throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
-    Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
-    cipher.init(Cipher.DECRYPT_MODE, publicKey);
-    byte[] decryptedBytes = cipher.doFinal(source);
-    return decryptedBytes;
-  }
-
-  private static PublicKey readX509PublicKey(byte[] pkcs8Bytes)
-    throws GeneralSecurityException {
-    KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-    X509EncodedKeySpec keySpec = new X509EncodedKeySpec(pkcs8Bytes);
-    try {
-      return keyFactory.generatePublic(keySpec);
-    } catch (InvalidKeySpecException e) {
-      throw new IllegalArgumentException("Unexpected key format!", e);
-    }
-  }
-
   public static PublicKey stringToPublicKey(String public_key)
     throws GeneralSecurityException {
     // Base64 decode the result
@@ -179,7 +180,7 @@ public class CryptoCipher {
     String pkcs1Pem = public_key.toString();
     pkcs1Pem = pkcs1Pem.replace("-----BEGIN RSA PUBLIC KEY-----", "");
     pkcs1Pem = pkcs1Pem.replace("-----END RSA PUBLIC KEY-----", "");
-    pkcs1Pem = pkcs1Pem.replace("\n", "");
+    pkcs1Pem = pkcs1Pem.replace("\\n", "");
     pkcs1Pem = pkcs1Pem.replace(" ", "");
 
     byte[] pkcs1EncodedBytes = Base64.decode(
