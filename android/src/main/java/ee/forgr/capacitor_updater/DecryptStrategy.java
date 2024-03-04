@@ -49,10 +49,10 @@ public class DecryptStrategy {
     return Objects.hash(getType(), getKey());
   }
 
-  // // @Override
-  // // public String toString() {
-  // //   return (
-  // //     "DecryptStrategy{" + "type=" + type + ", value='" + value + '\'' + '}'
-  // //   );
-  // // }
+  @Override
+  public String toString() {
+    return (
+      return this.toJSON().toString();
+    );
+  }
 }
