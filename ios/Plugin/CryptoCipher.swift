@@ -32,7 +32,7 @@ public struct AES128Key {
         self.aes128Key = aes128Key
     }
     ///
-    /// Takes the data and uses the private key to decrypt it. Will call `CCCrypt` in CommonCrypto
+    /// Takes the data and uses the key to decrypt it. Will call `CCCrypt` in CommonCrypto
     /// and provide it `ivData` for the initialization vector. Will use cipher block chaining (CBC) as
     /// the mode of operation.
     ///
@@ -134,6 +134,24 @@ public struct RSAPublicKey {
             return nil
         }
     }
+
+    ///
+    /// Takes the data and uses the public key to decrypt it.
+    /// Returns the decrypted data.
+    ///
+    public func decrypt(data: Data) -> Data? {
+        var error: Unmanaged<CFError>?
+        if let decryptedData: CFData = SecKeyCreateDecryptedData(self.publicKey, CryptoCipherConstants.rsaAlgorithm, data as CFData, &error) {
+            if error != nil {
+                return nil
+            } else {
+                return decryptedData as Data
+            }
+        } else {
+            return nil
+        }
+    }
+
     ///
     /// Allows you to export the RSA public key to a format (so you can send over the net).
     ///
@@ -142,13 +160,36 @@ public struct RSAPublicKey {
     }
     //
 
+    // // // ///
+    // // // /// Allows you to load an RSA public key (i.e. one downloaded from the net).
+    // // // ///
+    // // // public static func load(rsaPublicKeyData: Data) -> RSAPublicKey? {
+    // // //     if let publicKey: SecKey = .loadPublicFromData(rsaPublicKeyData) {
+    // // //         return RSAPublicKey(publicKey: publicKey)
+    // // //     } else {
+    // // //         return nil
+    // // //     }
+    // // // }
+
     ///
     /// Allows you to load an RSA public key (i.e. one downloaded from the net).
     ///
-    public static func load(rsaPublicKeyData: Data) -> RSAPublicKey? {
-        if let publicKey: SecKey = .loadPublicFromData(rsaPublicKeyData) {
+    public static func load(rsaPublicKey: String) -> RSAPublicKey? {
+        var pubKey: String = rsaPublicKey
+        pubKey = pubKey.replacingOccurrences(of: "-----BEGIN RSA PUBLIC KEY-----", with: "")
+        pubKey = pubKey.replacingOccurrences(of: "-----END RSA PUBLIC KEY-----", with: "")
+        pubKey = pubKey.replacingOccurrences(of: "\\n+", with: "", options: .regularExpression)
+        pubKey = pubKey.trimmingCharacters(in: .whitespacesAndNewlines)
+        do {
+            guard let rsaPublicKeyData: Data  = Data(base64Encoded: pubKey) else {
+                throw CustomError.cannotDecode
+            }
+            guard let publicKey: SecKey = .loadPublicFromData(rsaPublicKeyData) else {
+                throw CustomError.cannotDecode
+            }
             return RSAPublicKey(publicKey: publicKey)
-        } else {
+        } catch {
+            print("Error load RSA: \(error)")
             return nil
         }
     }
@@ -166,6 +207,24 @@ public struct RSAPrivateKey {
     fileprivate init(privateKey: SecKey) {
         self.privateKey = privateKey
     }
+
+    ///
+    /// Takes the data and uses the private key to encrypt it.
+    /// Returns the encrypted data.
+    ///
+    public func encrypt(data: Data) -> Data? {
+        var error: Unmanaged<CFError>?
+        if let encryptedData: CFData = SecKeyCreateEncryptedData(self.privateKey, CryptoCipherConstants.rsaAlgorithm, data as CFData, &error) {
+            if error != nil {
+                return nil
+            } else {
+                return encryptedData as Data
+            }
+        } else {
+            return nil
+        }
+    }
+
     ///
     /// Takes the data and uses the private key to decrypt it.
     /// Returns the decrypted data.
@@ -191,7 +250,7 @@ public struct RSAPrivateKey {
     }
 
     ///
-    /// Allows you to load an RSA public key (i.e. one downloaded from the net).
+    /// Allows you to load an RSA private key (i.e. one downloaded from the net).
     ///
     public static func load(rsaPrivateKey: String) -> RSAPrivateKey? {
         var privKey: String = rsaPrivateKey

@@ -240,6 +240,10 @@ extension CustomError: LocalizedError {
     public var appId: String = ""
     public var deviceID = UIDevice.current.identifierForVendor?.uuidString ?? ""
     public var privateKey: String = ""
+    public var key: String = "";
+    public var hasOldPrivateKeyPropertyInConfig: Bool = false;
+    public var hasDecryptStrategyInConfig: Bool = false;
+    public var decryptStrategyType: String = "private";
 
     public var notifyDownload: (String, Int) -> Void = { _, _  in }
 
@@ -365,16 +369,22 @@ extension CustomError: LocalizedError {
     }
 
     private func decryptFile(filePath: URL, sessionKey: String, version: String) throws {
-        if self.privateKey.isEmpty || sessionKey.isEmpty  || sessionKey.components(separatedBy: ":").count != 2 {
-            print("\(self.TAG) Cannot found privateKey or sessionKey")
+        if self.key.isEmpty || sessionKey.isEmpty  || sessionKey.components(separatedBy: ":").count != 2 {
+            print("\(self.TAG) Cannot find decryption key or sessionKey")
             return
         }
-        do {
-            guard let rsaPrivateKey: RSAPrivateKey = .load(rsaPrivateKey: self.privateKey) else {
-                print("cannot decode privateKey", self.privateKey)
-                throw CustomError.cannotDecode
-            }
 
+        if (self.decryptStrategyType.equals("private") && !self.key.startsWith("-----BEGIN RSA PRIVATE KEY-----")) {
+            print("\(self.TAG) The decryption strategy is: 'private' and the decryption key provided is not a private key");
+            return;
+        } 
+        if (self.decryptStrategyType.equals("public") && !self.key.startsWith("-----BEGIN RSA PUBLIC KEY-----")) {
+            print("\(self.TAG) The decryption strategy is: 'public' and the key is not a public key");
+            return;
+        }
+
+        do {
+            let aesPrivateKey: Data = nil;
             let sessionKeyArray: [String] = sessionKey.components(separatedBy: ":")
             guard let ivData: Data = Data(base64Encoded: sessionKeyArray[0]) else {
                 print("cannot decode sessionKey", sessionKey)
@@ -385,12 +395,42 @@ extension CustomError: LocalizedError {
                 throw NSError(domain: "Invalid session key data", code: 1, userInfo: nil)
             }
 
-            guard let sessionKeyDataDecrypted = try? rsaPrivateKey.decrypt(data: sessionKeyDataEncrypted) else {
-                throw NSError(domain: "Failed to decrypt session key data", code: 2, userInfo: nil)
+            if (self.decryptStrategyType.equals("private") {
+                guard let rsaPrivateKey: RSAPrivateKey = .load(rsaPrivateKey: self.key) else {
+                    print("cannot decode privateKey", self.key)
+                    throw CustomError.cannotDecode
+                }
+
+                // let sessionKeyArray: [String] = sessionKey.components(separatedBy: ":")
+                // guard let ivData: Data = Data(base64Encoded: sessionKeyArray[0]) else {
+                //     print("cannot decode sessionKey", sessionKey)
+                //     throw CustomError.cannotDecode
+                // }
+
+                // guard let sessionKeyDataEncrypted = Data(base64Encoded: sessionKeyArray[1]) else {
+                //     throw NSError(domain: "Invalid session key data", code: 1, userInfo: nil)
+                // }
+
+                guard let sessionKeyDataDecrypted = try? rsaPrivateKey.decrypt(data: sessionKeyDataEncrypted) else {
+                    throw NSError(domain: "Failed to decrypt session key data", code: 2, userInfo: nil)
+                }
+
+                aesPrivateKey = AES128Key(iv: ivData, aes128Key: sessionKeyDataDecrypted)
             }
 
-            let aesPrivateKey = AES128Key(iv: ivData, aes128Key: sessionKeyDataDecrypted)
+            if (self.decryptStrategyType.equals("public") {
+                guard let rsaPublicKey: RSAPublicKey = .load(rsaPublicKey: self.key) else {
+                    print("cannot decode public key", self.key)
+                    throw CustomError.cannotDecode
+                }
 
+                guard let sessionKeyDataDecrypted = try? rsaPublicKey.decrypt(data: sessionKeyDataEncrypted) else {
+                    throw NSError(domain: "Failed to decrypt session key data", code: 2, userInfo: nil)
+                }
+
+                aesPrivateKey = AES128Key(iv: ivData, aes128Key: sessionKeyDataDecrypted)
+            }
+            
             guard let encryptedData = try? Data(contentsOf: filePath) else {
                 throw NSError(domain: "Failed to read encrypted data", code: 3, userInfo: nil)
             }
@@ -513,7 +553,26 @@ extension CustomError: LocalizedError {
                 case .success:
                     self.notifyDownload(id, 71)
                     do {
+                        if (self.privateKey != null && !self.privateKey.isEmpty()) {
+                            self.key = self.privateKey;
+                            self.decryptStrategyType = "private";
+                        }
+
+                        if (self.decryptStrategy != null && !self.hasOldPrivateKeyPropertyInConfig)
+                        {
+                            if (!self.hasOldPrivateKeyPropertyInConfig) {
+                            self.decryptStrategyType = self.decryptStrategy.getType();
+                            self.key = self.decryptStrategy.getKey();
+                            }
+                        }
+
+                        if (!self.hasOldPrivateKeyPropertyInConfig && !self.hasDecryptStrategyInConfig)
+                        {
+                            print("\(self.TAG) There are no decryption keys in the config so the default private key provided by CapGo may be used to try to decrypt which may result in a 'decryptFile fail' error")
+                        }
+
                         try self.decryptFile(filePath: fileURL, sessionKey: sessionKey, version: version)
+
                         checksum = self.getChecksum(filePath: fileURL)
                         try self.saveDownloaded(sourceZip: fileURL, id: id, base: self.documentsDir.appendingPathComponent(self.bundleDirectoryHot))
                         self.notifyDownload(id, 85)

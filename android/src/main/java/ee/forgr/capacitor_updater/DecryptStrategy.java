@@ -6,6 +6,10 @@
 
 package ee.forgr.capacitor_updater;
 
+import com.getcapacitor.JSObject;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.json.JSONTokener;
 import java.util.Objects;
 
 public class DecryptStrategy {
@@ -34,6 +38,13 @@ public class DecryptStrategy {
     this.key = key;
   }
 
+  public JSObject toJSON() {
+    final JSObject result = new JSObject();
+    result.put("type", this.getType());
+    result.put("key", this.getKey());
+    return result;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -51,8 +62,6 @@ public class DecryptStrategy {
 
   @Override
   public String toString() {
-    return (
-      return this.toJSON().toString();
-    );
+    return this.toJSON().toString();
   }
 }
