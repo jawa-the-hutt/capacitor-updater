@@ -91,12 +91,8 @@ public class CapacitorUpdater {
   public String channelUrl = "";
   public String defaultChannel = "";
   public String appId = "";
-  public String privateKey = "";
-  public String key = "";
+  public String publicKey = "";
   public Boolean hasOldPrivateKeyPropertyInConfig = false;
-  public Boolean hasDecryptStrategyInConfig = false;
-  public String decryptStrategyType = "private";
-  public DecryptStrategy decryptStrategy = new DecryptStrategy(decryptStrategyType, key);
   public String deviceID = "";
   public int timeout = 20000;
 
@@ -348,27 +344,11 @@ public class CapacitorUpdater {
   ) {
     try {
       final File downloaded = new File(this.documentsDir, dest);
-      if (
-        this.privateKey != null && 
-        !this.privateKey.isEmpty()
-      ) {
-        this.key = this.privateKey;
-        this.decryptStrategyType = "private";
-      }
-
-      if (this.decryptStrategy != null && !this.hasOldPrivateKeyPropertyInConfig)
-      {
-        if (!this.hasOldPrivateKeyPropertyInConfig) {
-          this.decryptStrategyType = this.decryptStrategy.getType();
-          this.key = this.decryptStrategy.getKey();
-        }
-      }
-
-      if (!this.hasOldPrivateKeyPropertyInConfig && !this.hasDecryptStrategyInConfig)
+      if (this.hasOldPrivateKeyPropertyInConfig)
       {
         Log.i(
           CapacitorUpdater.TAG, 
-          "There are no decryption keys in the config so the default private key provided by CapGo may be used to try to decrypt which may result in a 'decryptFile fail' error"
+          "There is still an privateKey property in the config"
         );
       }
 
@@ -539,27 +519,20 @@ public class CapacitorUpdater {
   ) throws IOException {
     // (str != null && !str.isEmpty())
     if (
-      this.key == null ||
-      this.key.isEmpty() ||
+      this.publicKey == null ||
+      this.publicKey.isEmpty() ||
       ivSessionKey == null ||
       ivSessionKey.isEmpty() ||
       ivSessionKey.split(":").length != 2
     ) {
-      Log.i(TAG, "Cannot find decryption key or sessionKey");
+      Log.i(TAG, "Cannot find public key or sessionKey");
       return;
     }
 
-    if (this.decryptStrategyType.equals("private") && !this.key.startsWith("-----BEGIN RSA PRIVATE KEY-----")) {
+    if (!this.publicKey.startsWith("-----BEGIN RSA PUBLIC KEY-----")) {
       Log.e(
         CapacitorUpdater.TAG, 
-        "The decryption strategy is: 'private' and the decryption key provided is not a private key"
-      );
-      return;
-    } 
-    if (this.decryptStrategyType.equals("public") && !this.key.startsWith("-----BEGIN RSA PUBLIC KEY-----")) {
-      Log.e(
-        CapacitorUpdater.TAG, 
-        "The decryption strategy is: 'public' and the key is not a public key"
+        "The public key is not a valid RSA Public key"
       );
       return;
     }
@@ -572,16 +545,10 @@ public class CapacitorUpdater {
         sessionKeyB64.getBytes(),
         Base64.DEFAULT
       );
-      byte[] decryptedSessionKey = null;
-      if (this.decryptStrategyType.equals("private")) {
-        PrivateKey pKey = CryptoCipher.stringToPrivateKey(this.key);
-        decryptedSessionKey = CryptoCipher.decryptPrivateRSA(sessionKey, pKey);
-      }
 
-      if (this.decryptStrategyType.equals("public")) {
-        PublicKey pKey = CryptoCipher.stringToPublicKey(this.key);
-        decryptedSessionKey = CryptoCipher.decryptPublicRSA(sessionKey, pKey);
-      }
+      PublicKey pKey = CryptoCipher.stringToPublicKey(this.publicKey);
+      byte[] decryptedSessionKey = CryptoCipher.decryptRSA(sessionKey, pKey);
+
       SecretKey sKey = CryptoCipher.byteToSessionKey(decryptedSessionKey);
       byte[] content = new byte[(int) file.length()];
 
