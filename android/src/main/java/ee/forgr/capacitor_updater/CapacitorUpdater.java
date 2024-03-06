@@ -344,10 +344,9 @@ public class CapacitorUpdater {
   ) {
     try {
       final File downloaded = new File(this.documentsDir, dest);
-      if (this.hasOldPrivateKeyPropertyInConfig)
-      {
+      if (this.hasOldPrivateKeyPropertyInConfig) {
         Log.i(
-          CapacitorUpdater.TAG, 
+          CapacitorUpdater.TAG,
           "There is still an privateKey property in the config"
         );
       }
@@ -531,7 +530,7 @@ public class CapacitorUpdater {
 
     if (!this.publicKey.startsWith("-----BEGIN RSA PUBLIC KEY-----")) {
       Log.e(
-        CapacitorUpdater.TAG, 
+        CapacitorUpdater.TAG,
         "The public key is not a valid RSA Public key"
       );
       return;

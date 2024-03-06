@@ -50,7 +50,8 @@ public class CapacitorUpdaterPlugin extends Plugin {
   private static final String updateUrlDefault =
     "https://api.capgo.app/updates";
   private static final String statsUrlDefault = "https://api.capgo.app/stats";
-  private static final String defaultPublicKey = "-----BEGIN RSA PUBLIC KEY-----\nMIIBCgKCAQEA4pW9olT0FBXXivRCzd3xcImlWZrqkwcF2xTkX/FwXmj9eh9HkBLr\nsQmfsC+PJisRXIOGq6a0z3bsGq6jBpp3/Jr9jiaW5VuPGaKeMaZZBRvi/N5fIMG3\nhZXSOcy0IYg+E1Q7RkYO1xq5GLHseqG+PXvJsNe4R8R/Bmd/ngq0xh/cvcrHHpXw\nO0Aj9tfprlb+rHaVV79EkVRWYPidOLnK1n0EFHFJ1d/MyDIp10TEGm2xHpf/Brlb\n1an8wXEuzoC0DgYaczgTjovwR+ewSGhSHJliQdM0Qa3o1iN87DldWtydImMsPjJ3\nDUwpsjAMRe5X8Et4+udFW2ciYnQo9H0CkwIDAQAB\n-----END RSA PUBLIC KEY-----\n";
+  private static final String defaultPublicKey =
+    "-----BEGIN RSA PUBLIC KEY-----\nMIIBCgKCAQEA4pW9olT0FBXXivRCzd3xcImlWZrqkwcF2xTkX/FwXmj9eh9HkBLr\nsQmfsC+PJisRXIOGq6a0z3bsGq6jBpp3/Jr9jiaW5VuPGaKeMaZZBRvi/N5fIMG3\nhZXSOcy0IYg+E1Q7RkYO1xq5GLHseqG+PXvJsNe4R8R/Bmd/ngq0xh/cvcrHHpXw\nO0Aj9tfprlb+rHaVV79EkVRWYPidOLnK1n0EFHFJ1d/MyDIp10TEGm2xHpf/Brlb\n1an8wXEuzoC0DgYaczgTjovwR+ewSGhSHJliQdM0Qa3o1iN87DldWtydImMsPjJ3\nDUwpsjAMRe5X8Et4+udFW2ciYnQo9H0CkwIDAQAB\n-----END RSA PUBLIC KEY-----\n";
   private static final String channelUrlDefault =
     "https://api.capgo.app/channel_self";
 
@@ -175,9 +176,13 @@ public class CapacitorUpdaterPlugin extends Plugin {
     }
     Log.i(CapacitorUpdater.TAG, "appId: " + implementation.appId);
     Gson gson = new Gson();
-    this.implementation.publicKey = getConfig().getString("publicKey", defaultPublicKey);
+    this.implementation.publicKey =
+      getConfig().getString("publicKey", defaultPublicKey);
     this.implementation.hasOldPrivateKeyPropertyInConfig = false;
-    if (this.getConfig().getString("privateKey") != null && !this.getConfig().getString("privateKey").isEmpty()) {
+    if (
+      this.getConfig().getString("privateKey") != null &&
+      !this.getConfig().getString("privateKey").isEmpty()
+    ) {
       this.implementation.hasOldPrivateKeyPropertyInConfig = true;
     }
     this.implementation.statsUrl =
