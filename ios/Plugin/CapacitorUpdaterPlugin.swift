@@ -22,7 +22,7 @@ public class CapacitorUpdaterPlugin: CAPPlugin {
     let DELAY_CONDITION_PREFERENCES = ""
     private var updateUrl = ""
     private var statsUrl = ""
-    private var defaultPublicKey = "-----BEGIN RSA PUBLIC KEY-----\nMIIBCgKCAQEA4pW9olT0FBXXivRCzd3xcImlWZrqkwcF2xTkX/FwXmj9eh9HkBLr\nsQmfsC+PJisRXIOGq6a0z3bsGq6jBpp3/Jr9jiaW5VuPGaKeMaZZBRvi/N5fIMG3\nhZXSOcy0IYg+E1Q7RkYO1xq5GLHseqG+PXvJsNe4R8R/Bmd/ngq0xh/cvcrHHpXw\nO0Aj9tfprlb+rHaVV79EkVRWYPidOLnK1n0EFHFJ1d/MyDIp10TEGm2xHpf/Brlb\n1an8wXEuzoC0DgYaczgTjovwR+ewSGhSHJliQdM0Qa3o1iN87DldWtydImMsPjJ3\nDUwpsjAMRe5X8Et4+udFW2ciYnQo9H0CkwIDAQAB\n-----END RSA PUBLIC KEY-----\n";
+    private var defaultPublicKey = "-----BEGIN RSA PUBLIC KEY-----\nMIIBCgKCAQEA4pW9olT0FBXXivRCzd3xcImlWZrqkwcF2xTkX/FwXmj9eh9HkBLr\nsQmfsC+PJisRXIOGq6a0z3bsGq6jBpp3/Jr9jiaW5VuPGaKeMaZZBRvi/N5fIMG3\nhZXSOcy0IYg+E1Q7RkYO1xq5GLHseqG+PXvJsNe4R8R/Bmd/ngq0xh/cvcrHHpXw\nO0Aj9tfprlb+rHaVV79EkVRWYPidOLnK1n0EFHFJ1d/MyDIp10TEGm2xHpf/Brlb\n1an8wXEuzoC0DgYaczgTjovwR+ewSGhSHJliQdM0Qa3o1iN87DldWtydImMsPjJ3\nDUwpsjAMRe5X8Et4+udFW2ciYnQo9H0CkwIDAQAB\n-----END RSA PUBLIC KEY-----\n"
     private var backgroundTaskID: UIBackgroundTaskIdentifier = UIBackgroundTaskIdentifier.invalid
     private var currentVersionNative: Version = "0.0.0"
     private var autoUpdate = false
@@ -67,10 +67,10 @@ public class CapacitorUpdaterPlugin: CAPPlugin {
             periodCheckDelay = periodCheckDelayValue
         }
 
-        implementation.publicKey = getConfig().getString("publicKey", self.defaultPublicKey)!;
-        implementation.hasOldPrivateKeyPropertyInConfig = false;
-        if (getConfig().getString("privateKey") != nil && !getConfig().getString("privateKey")!.isEmpty) {
-            implementation.hasOldPrivateKeyPropertyInConfig = true;
+        implementation.publicKey = getConfig().getString("publicKey", self.defaultPublicKey)!
+        implementation.hasOldPrivateKeyPropertyInConfig = false
+        if getConfig().getString("privateKey") != nil && !getConfig().getString("privateKey")!.isEmpty {
+            implementation.hasOldPrivateKeyPropertyInConfig = true
         }
         implementation.notifyDownload = notifyDownload
         implementation.PLUGIN_VERSION = self.PLUGIN_VERSION

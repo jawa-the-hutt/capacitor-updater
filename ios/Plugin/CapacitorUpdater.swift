@@ -246,7 +246,7 @@ extension CustomError: LocalizedError {
     public var appId: String = ""
     public var deviceID = UIDevice.current.identifierForVendor?.uuidString ?? ""
     public var publicKey: String? = ""
-    public var hasOldPrivateKeyPropertyInConfig: Bool = false;
+    public var hasOldPrivateKeyPropertyInConfig: Bool = false
 
     public var notifyDownload: (String, Int) -> Void = { _, _  in }
 
@@ -389,10 +389,10 @@ extension CustomError: LocalizedError {
                 throw CustomError.cannotDecode
             }
 
-//            guard let base64EncodedData = sessionKeyArray[1].data(using: .utf8)! else {
-//                throw NSError(domain: "Invalid session key data", code: 1, userInfo: nil)
-//            }
-            
+            //            guard let base64EncodedData = sessionKeyArray[1].data(using: .utf8)! else {
+            //                throw NSError(domain: "Invalid session key data", code: 1, userInfo: nil)
+            //            }
+
             guard let sessionKeyDataEncrypted = Data(base64Encoded: sessionKeyArray[1]) else {
                 throw NSError(domain: "Invalid session key data", code: 1, userInfo: nil)
             }
@@ -525,8 +525,7 @@ extension CustomError: LocalizedError {
                 case .success:
                     self.notifyDownload(id, 71)
                     do {
-                        if (self.hasOldPrivateKeyPropertyInConfig)
-                        {
+                        if self.hasOldPrivateKeyPropertyInConfig {
                             print("\(self.TAG) There is still an privateKey property in the config")
                         }
 

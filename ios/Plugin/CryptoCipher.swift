@@ -89,8 +89,8 @@ public struct RSAPublicKey {
             guard let decryptedData = RSAPublicKey.decryptWithRSAKey(data, rsaKeyRef: self.publicKey, padding: SecPadding()) else {
                 throw CustomError.cannotDecryptSessionKey
             }
-            
-            return decryptedData;
+
+            return decryptedData
         } catch {
             print("Error decrypting data: \(error)")
             return nil
@@ -129,7 +129,7 @@ public struct RSAPublicKey {
             return nil
         }
     }
-    
+
     // code is copied from here: https://github.com/btnguyen2k/swiftutils/blob/88494f4c635b6c6d42ef0fb30a7d666acd38c4fa/SwiftUtils/RSAUtils.swift#L393
     public static func decryptWithRSAKey(_ encryptedData: Data, rsaKeyRef: SecKey, padding: SecPadding) -> Data? {
         let blockSize = SecKeyGetBlockSize(rsaKeyRef)
@@ -140,9 +140,9 @@ public struct RSAPublicKey {
 
         var decryptedData = [UInt8](repeating: 0, count: 0)
         var idx = 0
-        while (idx < encryptedDataAsArray.count ) {
+        while idx < encryptedDataAsArray.count {
             var idxEnd = idx + blockSize
-            if ( idxEnd > encryptedDataAsArray.count ) {
+            if idxEnd > encryptedDataAsArray.count {
                 idxEnd = encryptedDataAsArray.count
             }
             var chunkData = [UInt8](repeating: 0, count: blockSize)
@@ -154,7 +154,7 @@ public struct RSAPublicKey {
             var decryptedDataLength = blockSize
 
             let status = SecKeyDecrypt(rsaKeyRef, padding, chunkData, idxEnd-idx, &decryptedDataBuffer, &decryptedDataLength)
-            if ( status != noErr ) {
+            if status != noErr {
                 return nil
             }
             let finalData = removePadding(decryptedDataBuffer)
@@ -171,8 +171,8 @@ public struct RSAPublicKey {
         var idxFirstZero = -1
         var idxNextZero = data.count
         for i in 0..<data.count {
-            if ( data[i] == 0 ) {
-                if ( idxFirstZero < 0 ) {
+            if data[i] == 0 {
+                if idxFirstZero < 0 {
                     idxFirstZero = i
                 } else {
                     idxNextZero = i
@@ -180,7 +180,7 @@ public struct RSAPublicKey {
                 }
             }
         }
-        if ( idxNextZero-idxFirstZero-1 == 0 ) {
+        if idxNextZero-idxFirstZero-1 == 0 {
             idxNextZero = idxFirstZero
             idxFirstZero = -1
         }
